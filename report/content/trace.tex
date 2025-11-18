@@ -1,0 +1,36 @@
+\subsubsection{Mô tả bài toán}
+
+Thêm một system call mới \texttt{trace(int mask)} theo dõi các
+system call cho tiến trình gọi và mọi tiến trình con mà nó sinh ra sau đó. Khi một
+system call có mã (mã trong kernel/syscall.h) có bit tương ứng được bật trong
+mask được gọi, kernel sẽ in ra một dòng thông tin gồm PID của tiến trình và tên của
+lệnh gọi hệ thống đó. Cờ theo dõi phải được lưu trong cấu trúc
+proc và được sao chép khi \texttt{fork()} tạo tiến trình con.
+
+Ngoài ra, viết một chương trình người dùng \texttt{trace} để chạy
+một chương trình khác với theo dõi được bật: \texttt{trace <mask> <cmd> [args...]}. 
+
+\subsubsection{Phương pháp thực hiện}
+Bài làm gồm các bước: (1) thêm trường lưu mask vào cấu trúc tiến trình,
+(2) cung cấp syscall \texttt{trace} để thiết lập mask cho tiến trình hiện tại,
+(3) sao chép mask sang tiến trình con khi \texttt{fork}, và (4) in nhật ký trong \texttt{syscall()} khi cần.
+
+\paragraph{Trường lưu mask}
+Thêm một trường \texttt{int trace\_mask;} vào \texttt{struct proc} (file \texttt{kernel/proc.h}) để lưu bitmask
+theo dõi cho từng tiến trình.
+
+\paragraph{Syscall trace}
+Triển khai \texttt{sys\_trace(void)} trong \texttt{kernel/sysproc.c}: lấy tham số \texttt{mask} từ không gian người
+dùng bằng \texttt{argint(0, \&mask)} và gán \texttt{myproc()->trace\_mask = mask}. Hàm trả về 0 khi thành công.
+
+\paragraph{Sao chép khi fork}
+Trong \texttt{kernel/proc.c}, khi tạo tiến trình con \texttt{np} từ tiến trình cha \texttt{p}, gán
+\texttt{np->trace\_mask = p->trace\_mask} để tiến trình con kế thừa trạng thái theo dõi.
+
+\paragraph{Ghi nhật ký trong syscall}
+Sau khi gọi hàm syscall tương ứng và lưu kết quả vào \texttt{p->trapframe->a0}, kiểm tra xem
+syscall hiện tại (số \texttt{num}) có được theo dõi không bằng \texttt{if (p->trace\_mask \& (1 << num))}.
+Nếu có, in một dòng định dạng: \texttt{<pid>: syscall <tên> -> <giá trị trả về>} (ví dụ:
+\texttt{printf("\%d: syscall \%s -> \%d\textbackslash n", p->pid, syscallnames[num], p->trapframe->a0);} ).
+
+
