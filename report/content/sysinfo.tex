@@ -11,10 +11,12 @@ tính đúng đắn của system call. Chương trình sẽ vượt qua bài t�
 \texttt{"sysinfotest: OK"}.
 
 \subsubsection{Phương pháp thực hiện}
-Bài làm gồm các bước: (1) định nghĩa cấu trúc \texttt{sysinfo},
-(2) cung cấp syscall \texttt{sysinfo} để thu thập và trả về thông tin hệ thống,
-(3) triển khai các hàm hỗ trợ để đếm bộ nhớ trống và số tiến trình, và 
-(4) viết chương trình test để kiểm tra.
+\begin{enumerate}
+    \item Định nghĩa cấu trúc \texttt{sysinfo}.
+    \item Cung cấp syscall \texttt{sysinfo} để thu thập và trả về thông tin hệ thống.
+    \item Triển khai các hàm hỗ trợ để đếm bộ nhớ trống và số tiến trình.
+    \item Viết chương trình test để kiểm tra.
+\end{enumerate}
 
 \paragraph{Định nghĩa struct sysinfo}
 Tạo file \texttt{kernel/sysinfo.h} chứa định nghĩa \texttt{struct sysinfo} với hai trường:
