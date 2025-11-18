@@ -25,3 +25,42 @@ barrier
 .DS_Store
 *.dSYM
 *.pcap
+# LaTeX build artifacts
+*.aux
+*.log
+*.toc
+*.out
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.run.xml
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+
+# Output files
+*.pdf
+*.dvi
+*.ps
+
+# Tools / build folders
+.latexmk
+.latexmkrc
+_build/
+*_minted-*/
+
+# Index / bibliography
+*.idx
+*.ilg
+*.ind
+
+# Temporary / editor files (some may already be ignored)
+*.bak
+*.tmp
+*~
+.#*
+*.swp
