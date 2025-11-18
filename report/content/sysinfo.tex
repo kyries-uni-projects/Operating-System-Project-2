@@ -1,0 +1,68 @@
+\subsubsection{Mô tả bài toán}
+
+Thêm một system call mới \texttt{sysinfo} để thu thập thông tin về hệ thống đang chạy.
+Lệnh gọi hệ thống này nhận một đối số là con trỏ tới \texttt{struct sysinfo} 
+(được định nghĩa trong \texttt{kernel/sysinfo.h}). Kernel sẽ điền vào các trường của struct này:
+trường \texttt{freemem} sẽ được đặt thành số byte bộ nhớ trống và trường \texttt{nproc} 
+sẽ được đặt thành số tiến trình có trạng thái không phải \texttt{UNUSED}.
+
+Ngoài ra, viết một chương trình thử nghiệm \texttt{sysinfotest} để kiểm tra
+tính đúng đắn của system call. Chương trình sẽ vượt qua bài tập nếu nó in ra
+\texttt{"sysinfotest: OK"}.
+
+\subsubsection{Phương pháp thực hiện}
+Bài làm gồm các bước: (1) định nghĩa cấu trúc \texttt{sysinfo},
+(2) cung cấp syscall \texttt{sysinfo} để thu thập và trả về thông tin hệ thống,
+(3) triển khai các hàm hỗ trợ để đếm bộ nhớ trống và số tiến trình, và 
+(4) viết chương trình test để kiểm tra.
+
+\paragraph{Định nghĩa struct sysinfo}
+Tạo file \texttt{kernel/sysinfo.h} chứa định nghĩa \texttt{struct sysinfo} với hai trường:
+\texttt{uint64 freemem} (số byte bộ nhớ trống) và \texttt{uint64 nproc} (số tiến trình đang hoạt động).
+Include file này trong \texttt{kernel/sysproc.c} để sử dụng.
+
+\paragraph{Syscall sysinfo}
+Triển khai \texttt{sys\_sysinfo(void)} trong \texttt{kernel/sysproc.c}: 
+\begin{itemize}
+    \item Lấy địa chỉ user space bằng \texttt{argaddr(0, \&addr)}
+    \item Thu thập thông tin hệ thống: \texttt{info.freemem = getfreemem()} và \texttt{info.nproc = getnproc()}
+    \item Copy struct ra user space bằng \texttt{copyout(p->pagetable, addr, (char *)\&info, sizeof(info))}
+    \item Trả về -1 nếu copyout thất bại, ngược lại trả về 0
+\end{itemize}
+
+\paragraph{Hàm getfreemem}
+Trong \texttt{kernel/kalloc.c}, triển khai \texttt{getfreemem()} để đếm số byte bộ nhớ trống:
+\begin{itemize}
+    \item Sử dụng lock \texttt{acquire(\&kmem.lock)} để đảm bảo thread-safe
+    \item Duyệt qua danh sách liên kết \texttt{kmem.freelist}
+    \item Với mỗi page trống, cộng thêm \texttt{PGSIZE} (4096 bytes) vào biến đếm
+    \item Giải phóng lock \texttt{release(\&kmem.lock)} và trả về tổng số byte
+\end{itemize}
+Khai báo prototype \texttt{uint64 getfreemem(void);} trong \texttt{kernel/defs.h}.
+
+\paragraph{Hàm getnproc}
+Trong \texttt{kernel/proc.c}, triển khai \texttt{getnproc()} để đếm số tiến trình đang hoạt động:
+\begin{itemize}
+    \item Duyệt qua mảng \texttt{proc[NPROC]} chứa tất cả các tiến trình
+    \item Với mỗi tiến trình, sử dụng lock \texttt{acquire(\&p->lock)} để truy cập an toàn
+    \item Kiểm tra \texttt{if(p->state != UNUSED)} và tăng biến đếm nếu tiến trình đang được sử dụng
+    \item Giải phóng lock \texttt{release(\&p->lock)} sau mỗi lần kiểm tra
+    \item Trả về tổng số tiến trình
+\end{itemize}
+Khai báo prototype \texttt{uint64 getnproc(void);} trong \texttt{kernel/defs.h}.
+
+\paragraph{Chương trình test sysinfotest}
+Trong \texttt{user/sysinfotest.c}, triển khai chương trình kiểm tra:
+\begin{itemize}
+    \item Hàm \texttt{sinfo()} gọi system call \texttt{sysinfo()} và kiểm tra lỗi
+    \item Hàm \texttt{testmem()} thực hiện các bước test:
+    \begin{itemize}
+        \item Gọi \texttt{sinfo(\&info)} để lấy thông tin hệ thống ban đầu
+        \item Kiểm tra \texttt{info.nproc > 0} và \texttt{info.freemem > 0}
+        \item Cấp phát thêm bộ nhớ bằng \texttt{sbrk(20000)}
+        \item Gọi lại \texttt{sinfo(\&info1)} để lấy thông tin sau khi cấp phát
+        \item Kiểm tra \texttt{info1.freemem < info.freemem} để đảm bảo bộ nhớ trống đã giảm
+        \item In \texttt{"sysinfotest: OK"} nếu tất cả các kiểm tra đều pass
+    \end{itemize}
+\end{itemize}
+Thêm \texttt{\$U/\_sysinfotest} vào \texttt{UPROGS} trong \texttt{Makefile} để biên dịch chương trình.
