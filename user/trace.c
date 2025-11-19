@@ -4,6 +4,11 @@
 
 int main (int argc, char *argv[])
 {
+    if (argc < 3) 
+    {
+    fprintf(2, "usage: trace mask command [args...]\n");
+    exit(1);
+  }
     int mask = atoi(argv[1]);
 
     if (trace(mask) < 0)
