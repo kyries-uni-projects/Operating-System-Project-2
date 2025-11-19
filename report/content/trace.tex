@@ -33,4 +33,26 @@ syscall hiện tại (số \texttt{num}) có được theo dõi không bằng \t
 Nếu có, in một dòng định dạng: \texttt{<pid>: syscall <tên> -> <giá trị trả về>} (ví dụ:
 \texttt{printf("\%d: syscall \%s -> \%d\textbackslash n", p->pid, syscallnames[num], p->trapframe->a0);} ).
 
+\paragraph{Chương trình người dùng \texttt{trace}}
+Viết \texttt{user/trace.c} để cung cấp giao diện dòng lệnh cho tính năng theo dõi. Chương trình được chia thành các bước chính:
+
+\begin{itemize}
+    \item \textbf{Kiểm tra tham số đầu vào:} Chương trình yêu cầu người dùng cung cấp ít nhất hai tham số: 
+    \texttt{mask} (số nguyên chỉ định các syscall cần theo dõi) và \texttt{command} (lệnh cần chạy). 
+    Nếu số lượng tham số nhỏ hơn 3 (\texttt{argc < 3}), chương trình in thông báo hướng dẫn sử dụng 
+    qua \texttt{fprintf(2, "usage: trace mask command [args...]")} và thoát bằng \texttt{exit(1)}.
+    
+    \item \textbf{Thiết lập mask:} Chuyển đổi chuỗi \texttt{argv[1]} thành số nguyên bằng \texttt{atoi(argv[1])} 
+    và gọi syscall \texttt{trace(mask)} để bật theo dõi cho tiến trình hiện tại. Nếu syscall thất bại 
+    (trả về giá trị âm), in thông báo lỗi và thoát.
+    
+    \item \textbf{Thực thi chương trình mục tiêu:} Sử dụng \texttt{exec(argv[2], \&argv[2])} để thay thế 
+    tiến trình hiện tại bằng chương trình cần theo dõi. Tham số \texttt{\&argv[2]} truyền tên lệnh và 
+    các đối số còn lại cho chương trình mới. Nếu \texttt{exec} thất bại (trả về), in thông báo lỗi và thoát.
+\end{itemize}
+
+Khi chạy, chương trình sẽ bật theo dõi rồi thay thế chính nó bằng chương trình mục tiêu. 
+Vì mask đã được lưu trong \texttt{proc}, chương trình mục tiêu và các tiến trình con của nó sẽ tự động 
+bị theo dõi theo đúng các syscall được chỉ định trong mask.
+
 
